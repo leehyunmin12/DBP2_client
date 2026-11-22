@@ -1,3 +1,4 @@
+// 필요한 도구, API, 화면 부품, 아이콘, 변환 함수 불러오기
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { statsApi, tradesApi } from '../api/endpoints.js'
@@ -11,8 +12,10 @@ import {
 } from '../utils/domain.js'
 import { pct, toneOf } from '../utils/format.js'
 
+// 한 번에 가져올 거래 수
 const PAGE_SIZE = 100
 
+// "라벨 : 값" 한 줄
 function DetailRow({ label, value }) {
   return (
     <div className="detail-row">
@@ -24,14 +27,18 @@ function DetailRow({ label, value }) {
 
 // 거래 1건 상세 + 삭제
 function TradeDetail({ trade, onClose, onDeleted }) {
+  // 상태: 삭제 확인 단계, 삭제 요청 중, 오류 문구
   const [confirm, setConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const t = trade
+  // 선택된 거래가 없으면 그리지 않는다
+  // noMatch: 판매인데 짝이 되는 구매 기록이 없어서 손익을 계산할 수 없는 경우
   if (!t) return null
   const isSell = t.side === 'SELL'
   const noMatch = isSell && t.unmatched_qty >= t.qty
 
+  // 삭제 요청: 성공하면 부모에게 알리고, 실패하면 오류 문구를 보여 준다
   async function remove() {
     setDeleting(true)
     setError('')
@@ -47,16 +54,20 @@ function TradeDetail({ trade, onClose, onDeleted }) {
   return (
     <BottomSheet open title={`${t.name} ${sideLabel(t.side)}`} onClose={onClose}>
       <div className="detail">
+        {/* 기본 정보 줄들 (거래 금액 = 수량 × 단가) */}
         <DetailRow label="거래일" value={dot(t.traded_on)} />
         <DetailRow label="종목 코드" value={t.symbol} />
         <DetailRow label="수량" value={`${t.qty}주`} />
         <DetailRow label="단가" value={money(t.price, t.market, { sign: false })} />
         <DetailRow label="거래 금액" value={money(Number(t.qty) * Number(t.price), t.market, { sign: false })} />
+        {/* 판매일 때만 실현 손익과 구매 기록이 모자란 수량 */}
         {isSell && <DetailRow label="실현 손익" value={noMatch ? '계산 불가' : `${money(t.pnl ?? 0, t.market)} (${pct((t.rate ?? 0) * 100)})`} />}
         {isSell && t.unmatched_qty > 0 && <DetailRow label="구매 기록 없는 수량" value={`${t.unmatched_qty}주`} />}
+        {/* 메모와 감정, 삭제 오류 */}
         <DetailRow label="매매 이유" value={t.note?.reason ?? '메모 없음'} />
         <DetailRow label="감정" value={emotionLabelOf(t.note?.emotion)} />
         {error && <Banner>{error}</Banner>}
+        {/* 삭제는 2단계: "이 거래 삭제" → "취소 / 정말 삭제" (실수 방지) */}
         {confirm ? (
           <div className="detail__actions">
             <Button variant="secondary" onClick={() => setConfirm(false)}>취소</Button>
@@ -72,6 +83,7 @@ function TradeDetail({ trade, onClose, onDeleted }) {
 
 // 날짜별로 묶는다. 서버가 최신순으로 주므로 순서는 그대로 둔다.
 function groupByDay(trades) {
+  // 앞 거래와 날짜가 같으면 같은 묶음에, 다르면 새 묶음을 만든다
   const groups = []
   trades.forEach((t) => {
     const last = groups[groups.length - 1]
@@ -83,11 +95,15 @@ function groupByDay(trades) {
 
 // 판매 줄은 손익, 구매 줄은 매수 단가를 보여준다.
 function rowOf(t) {
+  // 보조 글 "구매 10주 · 메모"를 만든다
   const memo = t.note?.reason ?? '메모 없음'
   const base = `${sideLabel(t.side)} ${t.qty}주 · ${memo}`
+  // 구매 줄: 오른쪽에 매수 단가를 보여 준다
   if (t.side === 'BUY') {
     return { sub: base, amount: money(t.price, t.market, { sign: false }), rate: '매수 단가', tone: '' }
   }
+  // 판매 줄: 손익 금액, 수익률, 색
+  // 짝이 전혀 없으면 계산 불가, 일부만 없으면 "구매 기록 부족"
   const noMatch = t.unmatched_qty >= t.qty // 짝이 되는 구매 기록이 없는 판매
   return {
     sub: t.unmatched_qty > 0 ? `${base} · 구매 기록 부족` : base,
@@ -98,6 +114,7 @@ function rowOf(t) {
 }
 
 export default function TradesPage() {
+  // 상태: 탭, 필터 4개(기간, 시장, 종목, 구매/판매), 선택 창 열림 3개, 더 보기 결과, 상세로 연 거래
   const navigate = useNavigate()
   const [tab, setTab] = useState('history')
   const [period, setPeriod] = useState('올해 전체')
@@ -107,24 +124,22 @@ export default function TradesPage() {
   const [periodOpen, setPeriodOpen] = useState(false)
   const [stockOpen, setStockOpen] = useState(false)
   const [sideOpen, setSideOpen] = useState(false)
-  const [moreState, setMoreState] = useState({ key: '', rows: [] }) // "더 보기"로 붙인 거래 (조건이 바뀌면 버린다)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [selected, setSelected] = useState(null) // 상세로 연 거래
 
   // 기간 이름("이번 달" 등)을 날짜 범위로 바꾼다.
   const range = periodRange(period)
+  // 서버에 보낼 조건 묶음 (undefined 값은 qs()가 뺀다)
   const symbol = stock?.symbol
   const listParams = { ...range, market, symbol, side: side ?? undefined, limit: PAGE_SIZE }
 
+  // 거래 목록(필터 4개의 영향)과 통계(기간, 시장의 영향)를 불러온다
+  // 필터가 바뀌면 자동으로 다시 요청한다
   const trades = useFetch(() => tradesApi.list(listParams), [period, market, symbol, side])
   const stats = useFetch(() => statsApi.get({ ...range, market }), [period, market])
 
-  // filterKey: 필터 조합을 문자열 하나로 만든 것.
-  // '더 보기'로 붙인 거래가 어떤 필터일 때 받은 것인지 기억해 두고, 필터가 바뀌어 key가 달라지면 버린다.
-  const filterKey = `${period}|${market}|${symbol ?? ''}|${side ?? ''}`
-  const more = moreState.key === filterKey ? moreState.rows : []
-
-  const items = [...(trades.data?.items ?? []), ...more]
+  // items: 서버에서 받은 거래 (최대 PAGE_SIZE건), total: 조건에 맞는 전체 개수
+  // 날짜별로 묶는다
+  const items = trades.data?.items ?? []
   const total = trades.data?.total ?? 0
   const groups = groupByDay(items)
 
@@ -134,17 +149,6 @@ export default function TradesPage() {
   ;(stats.data?.by_stock ?? []).forEach((s) => stockMap.set(s.symbol, s.name))
   items.forEach((t) => stockMap.set(t.symbol, t.name))
   const stockOptions = [...stockMap.entries()].map(([sym, name]) => ({ symbol: sym, name }))
-
-  // 더 보기: 지금 보이는 개수(items.length)를 offset으로 보내 다음 거래를 받아 뒤에 이어 붙인다.
-  async function loadMore() {
-    setLoadingMore(true)
-    try {
-      const next = await tradesApi.list({ ...listParams, offset: items.length })
-      setMoreState({ key: filterKey, rows: [...more, ...next.items] })
-    } finally {
-      setLoadingMore(false)
-    }
-  }
 
   // 요약 카드: 종목을 골랐으면 그 종목의 손익, 아니면 전체 손익
   const summary = stats.data?.summary
@@ -160,6 +164,7 @@ export default function TradesPage() {
     )
   }
 
+  // 상태별 본문: 로딩 → 에러 → 0건 → 정상 중 하나를 고른다
   let body
   if (trades.loading) {
     body = (
@@ -186,6 +191,7 @@ export default function TradesPage() {
   } else {
     body = (
       <>
+        {/* 요약 카드와 필터 칩 (시장, 구매/판매, 종목) */}
         {summaryCard}
         <div className="chip-row">
           {MARKETS.map((m) => (
@@ -197,6 +203,7 @@ export default function TradesPage() {
           <Chip selected={!!stock} onClick={() => setStockOpen(true)}>{stock ? stock.name : '전체 종목'}<DropdownIcon size={16} /></Chip>
         </div>
 
+        {/* 탭에 따라 내역(날짜별 묶음 + 더 보기) 또는 종목별 목록 */}
         {tab === 'history' ? (
           <>
             {groups.map((g) => (
@@ -213,9 +220,6 @@ export default function TradesPage() {
                 </RowList>
               </section>
             ))}
-            {items.length < total && (
-              <Button variant="secondary" loading={loadingMore} onClick={loadMore}>더 보기 ({items.length}/{total})</Button>
-            )}
           </>
         ) : (
           <RowList>
@@ -231,10 +235,12 @@ export default function TradesPage() {
 
   return (
     <>
+      {/* 제목(누르면 기간 선택 창), 탭, 위에서 고른 본문 */}
       <PeriodTitle onClick={() => setPeriodOpen(true)}>{period} 매매</PeriodTitle>
       <UnderlineTabs tabs={[{ value: 'history', label: '내역' }, { value: 'stocks', label: '종목별' }]} value={tab} onChange={setTab} />
       <div className="trades">{body}</div>
 
+      {/* 선택 창 3개 (기간, 거래 종류, 종목): 고르면 값을 저장하고 창을 닫는다 */}
       <BottomSheet open={periodOpen} title="기간 선택" onClose={() => setPeriodOpen(false)}>
         <div className="option-list">
           {PERIODS.map((p) => (
@@ -272,8 +278,9 @@ export default function TradesPage() {
         </div>
         <Button variant="ghost" onClick={() => setStockOpen(false)}>닫기</Button>
       </BottomSheet>
+      {/* 거래 상세 창: key로 다른 거래를 열 때 새로 만들고, 삭제 후에는 목록과 통계를 다시 불러온다 */}
       <TradeDetail key={selected?.id} trade={selected} onClose={() => setSelected(null)}
-        onDeleted={() => { setSelected(null); setMoreState({ key: '', rows: [] }); trades.reload(); stats.reload() }} />
+        onDeleted={() => { setSelected(null); trades.reload(); stats.reload() }} />
     </>
   )
 }

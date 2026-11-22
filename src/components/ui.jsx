@@ -1,7 +1,10 @@
+// 필요한 도구와 아이콘 불러오기
+// 이 파일은 모양만 담당하고 서버와 통신하지 않는 부품 모음이다
 import { useState, useId } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BackIcon, ChevronIcon, CloseIcon, DropdownIcon, EyeIcon, EyeOffIcon, AlertIcon } from './Icons.jsx'
 
+// 버튼 (variant: 모양, loading이면 스피너 + 비활성, ...rest는 나머지 속성을 그대로 전달)
 export function Button({ variant = 'primary', loading = false, disabled, children, className = '', ...rest }) {
   return (
     <button
@@ -16,6 +19,8 @@ export function Button({ variant = 'primary', loading = false, disabled, childre
   )
 }
 
+// 입력칸: 라벨 + 입력 + 오류/힌트. 비밀번호면 보기/숨기기 버튼
+// useId로 라벨과 입력칸을 연결한다
 export function TextField({ label, error, hint, type = 'text', right, ...rest }) {
   const id = useId()
   const [reveal, setReveal] = useState(false)
@@ -43,6 +48,7 @@ export function TextField({ label, error, hint, type = 'text', right, ...rest })
   )
 }
 
+// 선택 가능한 알약 버튼
 export function Chip({ selected = false, children, ...rest }) {
   return (
     <button type="button" className={`chip ${selected ? 'is-selected' : ''}`} aria-pressed={selected} {...rest}>
@@ -51,6 +57,7 @@ export function Chip({ selected = false, children, ...rest }) {
   )
 }
 
+// 밑줄 탭 (tabs 목록, 지금 값, 누르면 onChange)
 export function UnderlineTabs({ tabs, value, onChange }) {
   return (
     <div className="utabs" role="tablist">
@@ -93,6 +100,7 @@ export function BackBar({ title, right, onBack }) {
   )
 }
 
+// 오류/경고 안내 상자 (role=alert라 낭독기가 바로 읽는다)
 export function Banner({ tone = 'danger', children }) {
   return (
     <div className={`banner banner--${tone}`} role="alert">
@@ -102,6 +110,7 @@ export function Banner({ tone = 'danger', children }) {
   )
 }
 
+// 큰 숫자 카드
 export function SummaryCard({ label, value, tone, sub }) {
   return (
     <section className="card summary">
@@ -112,6 +121,7 @@ export function SummaryCard({ label, value, tone, sub }) {
   )
 }
 
+// 목록 틀과 한 줄 (배지, 제목/보조, 금액/비율, 화살표)
 export function RowList({ children }) {
   return <div className="rowlist">{children}</div>
 }
@@ -137,6 +147,7 @@ export function SectionLabel({ children }) {
   return <p className="section-label">{children}</p>
 }
 
+// 아래에서 올라오는 창 (open이 아니면 그리지 않고, 어두운 막을 누르면 닫힌다)
 export function BottomSheet({ open, title, onClose, children }) {
   if (!open) return null
   return (
@@ -156,6 +167,7 @@ export function BottomSheet({ open, title, onClose, children }) {
   )
 }
 
+// 가운데 뜨는 창 (actions: 아래 버튼 영역)
 export function Modal({ open, title, onClose, children, actions }) {
   if (!open) return null
   return (
@@ -186,17 +198,7 @@ export function ScreenMessage({ icon, title, desc, primary, secondary }) {
   )
 }
 
+// 로딩 중 회색 자리 상자
 export function Skeleton({ h = 16, w = '100%', r = 8, style }) {
   return <div className="skeleton" style={{ height: h, width: w, borderRadius: r, ...style }} aria-hidden="true" />
-}
-
-export function SkeletonCard({ lines = 3 }) {
-  return (
-    <div className="card skeleton-card" aria-busy="true" aria-label="불러오는 중">
-      <Skeleton h={14} w="40%" />
-      {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton key={i} h={44} />
-      ))}
-    </div>
-  )
 }

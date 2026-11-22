@@ -1,3 +1,4 @@
+// 필요한 도구, API, 부품, 변환 함수 불러오기
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { reportsApi } from '../api/endpoints.js'
@@ -7,14 +8,18 @@ import { useFetch } from '../hooks/useFetch.js'
 import { dot, emotionKeyOf, emotionLabelOf, initialOf, marketLabel, money, percent } from '../utils/domain.js'
 import { pct, toneOf } from '../utils/format.js'
 
+// 승률(%) = 이긴 횟수 ÷ 전체 × 100 (전체가 0이면 0)
 const rate = (w, n) => (n ? Math.round((w / n) * 100) : 0)
 
+// 리포트 상세 화면: 주소의 :id로 리포트 1건을 불러와 탭으로 보여 준다
 export default function ReportDetailPage() {
+  // 상태: 주소의 id, 이동 함수, 탭, 리포트 불러오기 (id가 바뀌면 다시 요청)
   const { id } = useParams()
   const navigate = useNavigate()
   const [tab, setTab] = useState('summary')
   const { data: r, loading, error, reload } = useFetch(() => reportsApi.get(id), [id])
 
+  // 상태별 본문: 로딩 → 에러(404는 없는 리포트) → 요약/습관 탭
   let body
   if (loading) {
     body = (
@@ -38,6 +43,7 @@ export default function ReportDetailPage() {
 
   return (
     <>
+      {/* 상단바, 탭 (데이터가 있을 때만), 본문 */}
       <BackBar title={r ? `${marketLabel(r.market)} 리포트` : '리포트'} onBack={() => navigate('/reports')} />
       {r && (
         <UnderlineTabs tabs={[{ value: 'summary', label: '요약' }, { value: 'habits', label: '습관 분석' }]} value={tab} onChange={setTab} />
@@ -47,6 +53,7 @@ export default function ReportDetailPage() {
   )
 }
 
+// 작은 숫자 카드
 function MiniCard({ label, value, sub, tone }) {
   return (
     <div className="card mini">
@@ -57,7 +64,12 @@ function MiniCard({ label, value, sub, tone }) {
   )
 }
 
+// 요약 탭: 숫자는 모두 리포트를 만들 때 저장한 통계(stats_json)에서 읽는다
 function SummaryTab({ r, onChanged, onDeleted }) {
+  // s: 요약 통계, m: 시장, ratio: 손익비(평균 이익 ÷
+  // 평균 손실
+  // )
+  // stocks: 손익 절댓값 큰 6개 종목, max: 막대 길이 기준 (1로 시작해 0으로 나누기를 막는다)
   const s = r.stats.summary
   const m = r.market
   const ratio = s.avg_loss ? s.avg_profit / Math.abs(s.avg_loss) : null
@@ -66,6 +78,7 @@ function SummaryTab({ r, onChanged, onDeleted }) {
   return (
     <div className="content">
       <p className="footnote footnote--left num">{dot(r.period_start)} – {dot(r.period_end)}</p>
+      {/* 총 손익 카드와 작은 카드 4개 (승률, 매도 횟수, 평균 이익/손실) */}
       <SummaryCard label="총 손익" value={money(s.total_pnl, m)} tone={toneOf(s.total_pnl)}
         sub={`승률 ${percent(s.win_rate)}% · 매도 ${s.sell_count}건${ratio ? ` · 손익비 ${ratio.toFixed(2)}` : ''}`} />
       <div className="field-row">
@@ -78,6 +91,9 @@ function SummaryTab({ r, onChanged, onDeleted }) {
         <p className="privacy"><InfoIcon /> 구매 기록이 부족한 매도가 있어 일부 손익은 계산에서 빠졌어요.</p>
       )}
 
+      {/* 종목별 손익 막대 (길이 = */}
+      {/* 손익 */}
+      {/* ÷ 최댓값) */}
       {stocks.length > 0 && (
         <section className="card chart-card">
           <h2 className="chart-card__title">종목별 손익</h2>
@@ -93,6 +109,7 @@ function SummaryTab({ r, onChanged, onDeleted }) {
         </section>
       )}
 
+      {/* 매수 기록: 매수 횟수/금액과 감정별 매수 건수 */}
       {r.stats.buy_summary?.buy_count > 0 && (
         <section className="card chart-card">
           <h2 className="chart-card__title">매수 기록</h2>
@@ -112,6 +129,7 @@ function SummaryTab({ r, onChanged, onDeleted }) {
         </section>
       )}
 
+      {/* 대표 거래 목록 */}
       {r.stats.highlights?.length > 0 && (
         <>
           <p className="section-label">이번 기간의 대표 거래</p>
@@ -133,6 +151,7 @@ function SummaryTab({ r, onChanged, onDeleted }) {
         </>
       )}
 
+      {/* AI 요약과 삭제 버튼 */}
       <AiSummary r={r} onChanged={onChanged} />
       <DeleteReport id={r.id} onDeleted={onDeleted} />
     </div>
@@ -141,6 +160,7 @@ function SummaryTab({ r, onChanged, onDeleted }) {
 
 // AI가 쓴 글(## 제목, - 목록)을 안전하게(HTML 없이) 보여준다.
 function SummaryText({ text }) {
+  // 글을 줄 단위로 나눠 제목(##), 목록(-), 문단으로 구분해 담는다
   const blocks = []
   text.split('\n').forEach((line) => {
     const l = line.trim()
@@ -155,6 +175,7 @@ function SummaryText({ text }) {
       blocks.push({ type: 'p', text: l })
     }
   })
+  // 블록 종류에 맞는 태그로 그린다 (글자로만 그려서 AI 글에 코드가 섞여도 실행되지 않는다)
   return blocks.map((b, i) => {
     if (b.type === 'h') return <h3 key={i} className="ai-card__h">{b.text}</h3>
     if (b.type === 'ul') return <ul key={i} className="ai-card__ul">{b.items.map((t, j) => <li key={j}>{t}</li>)}</ul>
@@ -162,10 +183,12 @@ function SummaryText({ text }) {
   })
 }
 
+// AI 요약 카드: 요약이 없으면(NULL) "다시 만들기" 버튼을 보여 준다
 function AiSummary({ r, onChanged }) {
   const [retrying, setRetrying] = useState(false)
   const [error, setError] = useState('')
 
+  // 요약 재생성 요청, 성공하면 리포트를 다시 불러온다 (onChanged)
   async function retry() {
     setError('')
     setRetrying(true)
@@ -195,6 +218,7 @@ function AiSummary({ r, onChanged }) {
   )
 }
 
+// 삭제 버튼과 확인 모달 (삭제해도 기록한 매매는 남는다)
 function DeleteReport({ id, onDeleted }) {
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -224,18 +248,22 @@ function DeleteReport({ id, onDeleted }) {
   )
 }
 
+// 감정 key → CSS 색 (none은 감정 기록 없음)
 const COLORS = {
   confident: 'var(--emotion-confident)', neutral: 'var(--emotion-neutral)', anxious: 'var(--emotion-anxious)',
   impulse: 'var(--emotion-impulse)', greed: 'var(--emotion-greed)', fear: 'var(--emotion-fear)', none: 'var(--text-muted)',
 }
 
+// SVG 도넛 차트
 function Donut({ data, total }) {
+  // 반지름, 둘레(2πr), 각 조각의 시작 위치(앞 조각들의 길이 합)
   const r = 52, c = 2 * Math.PI * r
   const starts = data.map((_, i) => data.slice(0, i).reduce((sum, x) => sum + (x.n / total) * c, 0))
   return (
     <div className="donut">
       <svg viewBox="0 0 140 140" width="140" height="140" role="img" aria-label={`감정별 매도 비중, 총 ${total}건`}>
         <circle cx="70" cy="70" r={r} fill="none" stroke="var(--bg-muted)" strokeWidth="18" />
+        {/* 감정마다 원을 겹쳐 그린다: dasharray로 조각 길이, dashoffset으로 시작 위치를 정하고 rotate(-90)으로 12시에서 시작 */}
         {data.map((d, i) => {
           const len = (d.n / total) * c
           return <circle key={d.code} cx="70" cy="70" r={r} fill="none" stroke={COLORS[d.key]} strokeWidth="18"
@@ -247,7 +275,9 @@ function Donut({ data, total }) {
   )
 }
 
+// 습관 탭: 감정별 통계
 function HabitsTab({ r }) {
+  // 서버 통계를 화면용으로 바꾼다 (이긴 횟수 = 승률 × 매도 수)
   const emotions = r.stats.by_emotion.map((e) => ({
     code: e.emotion,
     key: e.emotion === 'NONE' ? 'none' : emotionKeyOf(e.emotion),
@@ -256,6 +286,7 @@ function HabitsTab({ r }) {
     wins: Math.round(e.win_rate * e.sell_count),
     pnl: e.pnl,
   }))
+  // 전체 매도 수 (0이면 안내 화면)
   const total = emotions.reduce((s, e) => s + e.n, 0)
   if (total === 0) {
     return <ScreenMessage icon={<EmptyListIcon />} title="분석할 감정 기록이 없어요" desc="매매를 기록할 때 감정을 함께 골라 보세요." />
@@ -265,6 +296,7 @@ function HabitsTab({ r }) {
       <section className="card chart-card">
         <h2 className="chart-card__title">감정별 매도 비중</h2>
         <div className="donut-row">
+          {/* 감정별 매도 비중: 도넛 차트와 범례 */}
           <Donut data={emotions} total={total} />
           <ul className="legend">
             {emotions.map((e) => (
@@ -274,6 +306,7 @@ function HabitsTab({ r }) {
         </div>
       </section>
 
+      {/* 감정별 줄 (건수, 비율, 승률, 승/패) */}
       <RowList>
         {emotions.map((e) => (
           <div key={e.code} className="inforow inforow--static">
@@ -292,6 +325,7 @@ function HabitsTab({ r }) {
 
       <section className="card chart-card">
         <h2 className="chart-card__title">감정별 승률</h2>
+        {/* 감정별 승률 막대 */}
         <WinBars rows={emotions.map((e) => ({ label: e.label, n: e.n, wins: e.wins, color: COLORS[e.key] }))} />
         <p className="chart-note"><InfoIcon /> 점선은 승률 50%예요. 표본이 3건보다 적으면 흐리게 표시해요.</p>
       </section>
@@ -299,6 +333,7 @@ function HabitsTab({ r }) {
   )
 }
 
+// 승률 막대 목록: 표본이 3건보다 적으면 흐리게 표시한다
 function WinBars({ rows }) {
   return (
     <ul className="winbars">

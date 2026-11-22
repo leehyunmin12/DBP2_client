@@ -1,6 +1,9 @@
 // Figma 아이콘의 path 데이터를 그대로 옮김. 색은 currentColor로 받는다.
+// 모든 아이콘이 공유하는 선 스타일: 채우기 없음, 선 색은 주변 글자색(currentColor), 굵기 1.8, 끝은 둥글게
+// 각 아이콘은 size로 크기를 바꾸고, 모양은 <path d="...">의 좌표 데이터가 정한다 (aria-hidden: 장식이라 낭독기에서 숨김)
 const base = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 
+// 눈 (비밀번호 보기)
 export function EyeIcon({ size = 22, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" aria-hidden="true" {...p}>
@@ -10,6 +13,7 @@ export function EyeIcon({ size = 22, ...p }) {
   )
 }
 
+// 눈에 빗금 (비밀번호 숨기기)
 export function EyeOffIcon({ size = 22, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" aria-hidden="true" {...p}>
@@ -19,6 +23,7 @@ export function EyeOffIcon({ size = 22, ...p }) {
   )
 }
 
+// 줄 세 개 (매매 탭)
 export function MenuIcon({ size = 24, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -27,6 +32,7 @@ export function MenuIcon({ size = 24, ...p }) {
   )
 }
 
+// 동그라미 안의 + (입력 탭)
 export function PlusCircleIcon({ size = 24, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -36,6 +42,7 @@ export function PlusCircleIcon({ size = 24, ...p }) {
   )
 }
 
+// 막대 그래프 (리포트 탭)
 export function BarsIcon({ size = 24, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -44,6 +51,7 @@ export function BarsIcon({ size = 24, ...p }) {
   )
 }
 
+// 아래 화살표
 export function DropdownIcon({ size = 22, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" aria-hidden="true" {...p}>
@@ -52,6 +60,7 @@ export function DropdownIcon({ size = 22, ...p }) {
   )
 }
 
+// 오른쪽 화살표 (목록 줄 끝)
 export function ChevronIcon({ size = 20, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -60,6 +69,7 @@ export function ChevronIcon({ size = 20, ...p }) {
   )
 }
 
+// 왼쪽 화살표 (뒤로가기)
 export function BackIcon({ size = 24, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -68,6 +78,7 @@ export function BackIcon({ size = 24, ...p }) {
   )
 }
 
+// X (닫기)
 export function CloseIcon({ size = 20, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -76,6 +87,7 @@ export function CloseIcon({ size = 20, ...p }) {
   )
 }
 
+// 체크 표시
 export function CheckIcon({ size = 20, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -84,6 +96,7 @@ export function CheckIcon({ size = 20, ...p }) {
   )
 }
 
+// 위쪽 화살표 (업로드)
 export function UploadIcon({ size = 24, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -92,6 +105,7 @@ export function UploadIcon({ size = 24, ...p }) {
   )
 }
 
+// 사진 모양
 export function ImageIcon({ size = 20, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -101,6 +115,7 @@ export function ImageIcon({ size = 20, ...p }) {
   )
 }
 
+// 동그라미 안의 ! (경고)
 export function AlertIcon({ size = 18, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -110,6 +125,7 @@ export function AlertIcon({ size = 18, ...p }) {
   )
 }
 
+// 동그라미 안의 i (안내)
 export function InfoIcon({ size = 16, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" {...p}>
@@ -119,6 +135,7 @@ export function InfoIcon({ size = 16, ...p }) {
   )
 }
 
+// 줄 세 개 (빈 목록 안내)
 export function EmptyListIcon({ size = 28, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -127,6 +144,7 @@ export function EmptyListIcon({ size = 28, ...p }) {
   )
 }
 
+// 돋보기 (검색 결과 없음)
 export function SearchIcon({ size = 28, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
