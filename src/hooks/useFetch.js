@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// - alive: 화면이 바뀐 뒤 늦게 도착한 응답이 상태를 덮어쓰지 않게 막는 표시 (cleanup에서 false로 바꿈).
+// - tick: reload()가 숫자를 올리면 useEffect가 다시 실행되어 같은 요청을 한 번 더 보낸다.
 // 화면이 열리거나 deps가 바뀔 때 fn()을 부르고 { data, error, loading, reload }를 돌려준다.
 // 로그인이 풀렸으면(401) 로그인 화면으로 보낸다.
 export function useFetch(fn, deps = []) {

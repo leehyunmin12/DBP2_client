@@ -9,6 +9,8 @@ export default function StockPicker({ value, onChange, error, label = '종목명
   const [results, setResults] = useState([])
   const [open, setOpen] = useState(false)
 
+  // 디바운스: 글자를 칠 때마다 요청하지 않고, 250ms 동안 입력이 멈추면 한 번만 검색한다.
+  // cleanup에서 타이머를 지우고 alive=false로 바꿔서, 이전 검색 결과가 나중에 도착해 덮어쓰는 것을 막는다.
   useEffect(() => {
     const q = text.trim()
     if (!open || !q) return undefined

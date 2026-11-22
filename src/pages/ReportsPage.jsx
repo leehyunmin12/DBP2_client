@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { reportsApi, statsApi } from '../api/endpoints.js'
 import { Banner, Button, Chip, Modal, ScreenMessage, Skeleton, TextField } from '../components/ui.jsx'
@@ -81,14 +81,17 @@ function PeriodModal({ open, onClose, onCreated }) {
   const [preset, setPreset] = useState('최근 3개월')
   const [start, setStart] = useState(initial.from)
   const [end, setEnd] = useState(initial.to)
-  const [countState, setCountState] = useState({ key: '', n: null }) // 이 기간의 매도 건수
   const [today] = useState(() => isoDate(new Date()))
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
   const invalid = !start || !end || start > end
-  const countKey = `${start}|${end}|${market}`
-  const count = countState.key === countKey ? countState.n : null
+  // 고른 기간/시장의 매도 건수. 기간이 잘못되면 요청하지 않는다. (불러오는 중이면 null)
+  const sellStats = useFetch(
+    () => (invalid ? Promise.resolve(null) : statsApi.get({ from: start, to: end, market })),
+    [start, end, market],
+  )
+  const count = sellStats.data?.summary.sell_count ?? null
 
   function choose(label) {
     setPreset(label)
@@ -98,19 +101,6 @@ function PeriodModal({ open, onClose, onCreated }) {
       setEnd(r.to)
     }
   }
-
-  // 기간이나 시장이 바뀌면 그 기간의 매도 건수를 다시 센다.
-  useEffect(() => {
-    if (!open || invalid) return undefined
-    let alive = true
-    statsApi
-      .get({ from: start, to: end, market })
-      .then((s) => alive && setCountState({ key: countKey, n: s.summary.sell_count }))
-      .catch(() => alive && setCountState({ key: countKey, n: null }))
-    return () => {
-      alive = false
-    }
-  }, [open, invalid, start, end, market, countKey])
 
   async function create() {
     if (invalid || creating) return

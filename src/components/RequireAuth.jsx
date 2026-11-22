@@ -6,6 +6,7 @@ import { EmptyListIcon } from './Icons.jsx'
 import { ScreenMessage, Skeleton } from './ui.jsx'
 
 // 로그인한 사람만 들어갈 수 있는 화면들을 감싼다. 로그인이 안 되어 있으면 useFetch가 /login으로 보낸다.
+// Outlet: 라우트 안쪽 화면이 들어갈 자리. 로딩/에러가 아닐 때만 보여 준다.
 export default function RequireAuth() {
   const { loading, error, reload } = useFetch(authApi.me, [])
 

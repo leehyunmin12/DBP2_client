@@ -1,4 +1,4 @@
-import { EMOTIONS } from '../mock/emotions.js'
+import { EMOTIONS } from './emotions.js'
 import { won } from './format.js'
 
 const MINUS = '−'

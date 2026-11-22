@@ -92,11 +92,11 @@ function ManualForm() {
         <TextField label="매도일" type="date" max={today} value={f.sellDate} onChange={(e) => set('sellDate')(e.target.value)} error={show('sellDate')} />
       </div>
       <div className="field-row">
-        <TextField label="수량 (주)" inputMode="decimal" placeholder="0" value={withCommaDecimal(f.qty)} onChange={(e) => set('qty')(decimals(e.target.value.replaceAll(',', '')))} error={show('qty')} />
+        <TextField label="수량 (주)" inputMode="decimal" placeholder="0" value={withCommaDecimal(f.qty)} onChange={(e) => set('qty')(decimals(e.target.value))} error={show('qty')} />
       </div>
       <div className="field-row">
-        <TextField label={`매수가 (${unit})`} inputMode="decimal" placeholder="0" value={withCommaDecimal(f.buy)} onChange={(e) => set('buy')(decimals(e.target.value.replaceAll(',', '')))} error={show('buy')} />
-        <TextField label={`매도가 (${unit})`} inputMode="decimal" placeholder="0" value={withCommaDecimal(f.sell)} onChange={(e) => set('sell')(decimals(e.target.value.replaceAll(',', '')))} error={show('sell')} />
+        <TextField label={`매수가 (${unit})`} inputMode="decimal" placeholder="0" value={withCommaDecimal(f.buy)} onChange={(e) => set('buy')(decimals(e.target.value))} error={show('buy')} />
+        <TextField label={`매도가 (${unit})`} inputMode="decimal" placeholder="0" value={withCommaDecimal(f.sell)} onChange={(e) => set('sell')(decimals(e.target.value))} error={show('sell')} />
       </div>
 
       <ReasonChips value={f.reason} onChange={set('reason')} />
@@ -149,6 +149,8 @@ function CaptureUpload({ onManual }) {
   }
   const remove = (i) => setFiles((fs) => fs.filter((_, idx) => idx !== i))
 
+  // - Promise.allSettled: 요청을 동시에 보내고 일부가 실패해도 성공/실패 결과를 모두 받는다. (Promise.all은 하나만 실패해도 전체가 실패)
+  // - navigate의 state: 주소창에 드러나지 않게 다음 화면으로 데이터를 넘긴다. 새로고침하면 사라진다.
   // 장마다 서버에 보내 거래 후보를 받고, 확인 화면으로 넘어간다. (저장은 확인 화면에서)
   async function recognize() {
     setError('')

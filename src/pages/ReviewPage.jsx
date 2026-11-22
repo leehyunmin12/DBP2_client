@@ -6,7 +6,7 @@ import StockPicker from '../components/StockPicker.jsx'
 import { EmotionChips, ReasonChips, decimals, withCommaDecimal } from '../components/TradeForm.jsx'
 import { SearchIcon } from '../components/Icons.jsx'
 import { buildNote, dot, emotionKeyOf, initialOf, isoDate, money, sideLabel } from '../utils/domain.js'
-import { emotionByKey } from '../mock/emotions.js'
+import { emotionByKey } from '../utils/emotions.js'
 
 // 서버가 돌려준 후보 -> 화면에서 고칠 수 있는 항목
 const toItem = (c, i) => ({
@@ -201,8 +201,8 @@ function EditSheet({ trade, onClose, onDelete, onSave }) {
           <Chip selected={f.side === 'SELL'} onClick={() => set('side')('SELL')}>판매</Chip>
         </div>
         <div className="field-row">
-          <TextField label="수량 (주)" inputMode="decimal" value={withCommaDecimal(f.qty)} onChange={(e) => set('qty')(decimals(e.target.value.replaceAll(',', '')))} error={show('qty')} />
-          <TextField label={`단가 (${unit})`} inputMode="decimal" value={withCommaDecimal(f.price)} onChange={(e) => set('price')(decimals(e.target.value.replaceAll(',', '')))} error={show('price')} />
+          <TextField label="수량 (주)" inputMode="decimal" value={withCommaDecimal(f.qty)} onChange={(e) => set('qty')(decimals(e.target.value))} error={show('qty')} />
+          <TextField label={`단가 (${unit})`} inputMode="decimal" value={withCommaDecimal(f.price)} onChange={(e) => set('price')(decimals(e.target.value))} error={show('price')} />
         </div>
         <ReasonChips value={f.reason} onChange={set('reason')} />
         <EmotionChips value={f.emotion} onChange={set('emotion')} />

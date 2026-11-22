@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { statsApi, tradesApi } from '../api/endpoints.js'
 import {
@@ -111,13 +111,16 @@ export default function TradesPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [selected, setSelected] = useState(null) // 상세로 연 거래
 
-  const range = useMemo(() => periodRange(period), [period])
+  // 기간 이름("이번 달" 등)을 날짜 범위로 바꾼다.
+  const range = periodRange(period)
   const symbol = stock?.symbol
   const listParams = { ...range, market, symbol, side: side ?? undefined, limit: PAGE_SIZE }
 
   const trades = useFetch(() => tradesApi.list(listParams), [period, market, symbol, side])
   const stats = useFetch(() => statsApi.get({ ...range, market }), [period, market])
 
+  // filterKey: 필터 조합을 문자열 하나로 만든 것.
+  // '더 보기'로 붙인 거래가 어떤 필터일 때 받은 것인지 기억해 두고, 필터가 바뀌어 key가 달라지면 버린다.
   const filterKey = `${period}|${market}|${symbol ?? ''}|${side ?? ''}`
   const more = moreState.key === filterKey ? moreState.rows : []
 
@@ -126,13 +129,13 @@ export default function TradesPage() {
   const groups = groupByDay(items)
 
   // 종목 선택 목록: 매도한 종목(통계) + 지금 불러온 거래의 종목
-  const stockOptions = useMemo(() => {
-    const m = new Map()
-    ;(stats.data?.by_stock ?? []).forEach((s) => m.set(s.symbol, s.name))
-    items.forEach((t) => m.set(t.symbol, t.name))
-    return [...m.entries()].map(([sym, name]) => ({ symbol: sym, name }))
-  }, [stats.data, trades.data, more]) // oxlint-disable-line
+  // (Map은 같은 종목 코드가 두 번 들어가도 하나로 합쳐 준다)
+  const stockMap = new Map()
+  ;(stats.data?.by_stock ?? []).forEach((s) => stockMap.set(s.symbol, s.name))
+  items.forEach((t) => stockMap.set(t.symbol, t.name))
+  const stockOptions = [...stockMap.entries()].map(([sym, name]) => ({ symbol: sym, name }))
 
+  // 더 보기: 지금 보이는 개수(items.length)를 offset으로 보내 다음 거래를 받아 뒤에 이어 붙인다.
   async function loadMore() {
     setLoadingMore(true)
     try {

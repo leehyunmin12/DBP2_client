@@ -18,6 +18,8 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
       </Route>
+      {/* element만 있고 path가 없는 Route는 "레이아웃 라우트"다. 안쪽 화면이 <Outlet/> 자리에 끼워진다. */}
+      {/* RequireAuth가 로그인 확인을 하고, 그 안의 Layout이 화면 틀(탭바 유무)을 정한다. */}
       {/* 로그인이 필요한 화면 */}
       <Route element={<RequireAuth />}>
         <Route element={<PlainLayout />}>

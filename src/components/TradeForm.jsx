@@ -1,5 +1,5 @@
 import { Chip } from './ui.jsx'
-import { EMOTIONS, REASONS } from '../mock/emotions.js'
+import { EMOTIONS, REASONS } from '../utils/emotions.js'
 
 export function ReasonChips({ value, onChange, label = '매매 이유' }) {
   return (
